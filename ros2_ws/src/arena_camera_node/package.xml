@@ -23,7 +23,8 @@
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
-
+  <depend>image_transport</depend>
+  <exec_depend>image_transport_plugins</exec_depend>
 
 
   <!--

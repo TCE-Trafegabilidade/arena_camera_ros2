@@ -1,14 +1,92 @@
 version: "3.2"
 services:
-  development:
+  camera_node:
+    image: arena_camera_ros2:latest
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - .:/arena_camera_ros2
-
+      - ./ros2_ws/:/arena_camera_ros2/ros2_ws/
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=$DISPLAY
+      - QT_X11_NO_MITSHM=1
     network_mode: host
-    command:
-      ["bash"]
+    ports:
+      - "9090:9090"
+      - "5000:5000"
+    privileged: true
+    ipc: host
+    stdin_open: true # -i
+    tty: true        # -t
+    command: ros2 run arena_camera_node start --ros-args -p serial:="904240001" -p topic:=/camera/back/image_color/compressed -p width:=1280 -p height:=1024 -p pixelformat:=rgb8 -p exposure_time:=350.0 -
     # lucid devices container can see
       #  ["/ArenaSDK_Linux_x64/precompiledExamples/./IpConfigUtility", "/list"]
+  development:
+    image: arena_camera_ros2:latestimage 
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./ros2_ws/:/arena_camera_ros2/ros2_ws/
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=$DISPLAY
+      - QT_X11_NO_MITSHM=1
+    ports:
+      - "9090:9090"
+    network_mode: host
+    privileged: true
+    ipc: host
+    stdin_open: true # -i
+    tty: true        # -t
+    command: bash
+
+  recorder:
+    # Usa a mesma imagem para garantir compatibilidade de bibliotecas
+    image: arena_camera_ros2:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: arena_camera_recorder
+    
+    # Define que este serviço não sobe automaticamente
+    profiles: ["manual"] 
+    
+    # Configurações de rede idênticas para enxergar os tópicos
+    network_mode: host
+    ipc: host
+    pid: host # Opcional, ajuda a sincronizar processos
+    
+    # Onde salvar as bags (mesmo volume mapeado)
+    volumes:
+      - ./ros2_ws/:/arena_camera_ros2/ros2_ws/
+    
+    # Diretório onde o comando será executado
+    working_dir: /arena_camera_ros2/ros2_ws/data
+    
+    # O comando mágico. 
+    # Usamos timestamp no nome da pasta para não sobrescrever gravações antigas.
+    command: >
+      bash -c "mkdir -p /arena_camera_ros2/ros2_ws/data && 
+      cd /arena_camera_ros2/ros2_ws/data &&
+      ros2 bag record 
+      -o bag_back_cam_$(date +%Y%m%d_%H%M%S) 
+      /camera/back/image_color/compressed"
+
+  ros_bridge:
+    image: osrf/ros:foxy-ros1-bridge
+    container_name: ros_bridge_container
+    network_mode: host
+    restart: always
+    ports:
+      - "9090:9090"
+      - "5000:5000"
+    environment:
+      # Aponta para o roscore que está rodando no OUTRO compose (mas na mesma rede host)
+      - ROS_MASTER_URI=http://localhost:11311
+      - ROS_IP=127.0.0.1
+      # Garante que ele fale no mesmo canal ROS 2 que a câmera
+      - ROS_DOMAIN_ID=0 
+    # O comando inicia a bridge dinâmica (conecta tudo o que encontrar)
+    command: ros2 run ros1_bridge dynamic_bridge 1to2 /camera/back/image_color/compressed

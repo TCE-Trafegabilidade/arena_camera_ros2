@@ -3,11 +3,27 @@
 
 # linux/amd64 only for now
 #https://hub.docker.com/layers/osrf/ros/eloquent-desktop/images/sha256-742948bc521573ff962f5a7f084ba1562a319e547c3938603f8dff5d33d3466e?context=explore
-FROM osrf/ros:eloquent-desktop
+FROM osrf/ros:humble-desktop
 RUN apt-get update \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install cmake 3.15+
+RUN apt-get update && apt-get install -y \
+    wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && wget -qO- "https://cmake.org/files/v3.17/cmake-3.17.0-Linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C /usr/local
+
+RUN apt-get update && apt-get remove -y \
+    ros-humble-image-transport-plugins \
+    ros-humble-compressed-depth-image-transport \
+    && apt-get install -y \
+    ros-humble-compressed-image-transport \
+    && rm -rf /var/lib/apt/lists/*
 # ARGS might want to change ---------------------------------------------------
 
 # ArenaSDK tar file on parent the host relative to the build context; it must contain the ArenaSDK .tar.gz file
@@ -48,6 +64,10 @@ ADD ${arena_api_root_on_host}/*.whl ${arena_api_parent}/
 # install via pip3 all whl files in the arena_api parent dir
 RUN for whl_package in `ls ${arena_api_parent}/*.whl`; do pip3 install $whl_package; done
 
+COPY resources/metavision/metavision.list /etc/apt/sources.list.d/metavision.list
+RUN apt-get update && apt-get install -y \
+    metavision-sdk \
+    && rm -rf /var/lib/apt/lists/*
 # setup workspace -------------------------------------------------------------
 
 # setup entrypoint

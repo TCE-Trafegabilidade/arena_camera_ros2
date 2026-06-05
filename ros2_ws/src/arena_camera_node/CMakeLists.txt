@@ -48,6 +48,7 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(arena_sdk REQUIRED)
+find_package(image_transport REQUIRED)
 
 # ------------
 # EXPORT DEPS
@@ -143,6 +144,7 @@ ament_target_dependencies(${target_name}  rclcpp
                                           std_srvs
                                           sensor_msgs
                                           arena_sdk
+                                          image_transport
                                           )
 
 

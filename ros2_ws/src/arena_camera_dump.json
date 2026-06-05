@@ -1,0 +1,40 @@
+{
+  "exported_at_utc": "2026-03-20T00:22:31.634466+00:00",
+  "device_index": 0,
+  "device_info": {
+    "model": null,
+    "vendor": null,
+    "serial": null,
+    "display_name": null,
+    "device_version": null,
+    "user_defined_name": null
+  },
+  "sdk": {
+    "module": "arena_api.system"
+  },
+  "nodemaps": [
+    {
+      "name": "device",
+      "node_count": 0,
+      "errors": [],
+      "nodes": []
+    },
+    {
+      "name": "tl_device",
+      "node_count": 0,
+      "errors": [],
+      "nodes": []
+    },
+    {
+      "name": "tl_stream",
+      "node_count": 0,
+      "errors": [],
+      "nodes": []
+    }
+  ],
+  "notes": [
+    "Nem todos os nodes estarão legíveis/escrevíveis em todos os estados da câmera.",
+    "Alguns nodes dependem de TriggerMode, AcquisitionStop ou permissões de acesso.",
+    "Diferenças entre firmware/modelo podem alterar nomes, ranges e disponibilidade."
+  ]
+}

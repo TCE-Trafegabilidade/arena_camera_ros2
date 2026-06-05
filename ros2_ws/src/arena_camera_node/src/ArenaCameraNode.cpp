@@ -173,8 +173,13 @@ void ArenaCameraNode::initialize_()
   // rmw_qos_history_policy_t;
   // auto pub_qos_init = rclcpp::QoSInitialization(history_policy_, );
 
-  m_pub_ = this->create_publisher<sensor_msgs::msg::Image>(
-      this->get_parameter("topic").as_string(), pub_qos_);
+  // m_pub_ = this->create_publisher<sensor_msgs::msg::Image>(
+  //     this->get_parameter("topic").as_string(), pub_qos_);
+  m_pub_ = image_transport::create_publisher(
+    this, 
+    this->get_parameter("topic").as_string(), 
+    pub_qos_.get_rmw_qos_profile()
+);
 
   std::stringstream pub_qos_info;
   auto pub_qos_profile = pub_qos_.get_rmw_qos_profile();
@@ -241,8 +246,8 @@ void ArenaCameraNode::publish_images_()
       pImage = m_pDevice->GetImage(1000);
       msg_form_image_(pImage, *p_image_msg);
 
-      m_pub_->publish(std::move(p_image_msg));
-
+      // m_pub_->publish(std::move(p_image_msg));
+      m_pub_.publish(*p_image_msg);
       log_info(std::string("image ") + std::to_string(pImage->GetFrameId()) +
                " published to " + topic_);
       this->m_pDevice->RequeueBuffer(pImage);
@@ -360,7 +365,8 @@ void ArenaCameraNode::publish_an_image_on_trigger_(
     auto msg = std::string("image ") + std::to_string(pImage->GetFrameId()) +
                " published to " + topic_;
     msg_form_image_(pImage, *p_image_msg);
-    m_pub_->publish(std::move(p_image_msg));
+    // m_pub_->publish(std::move(p_image_msg));
+    m_pub_.publish(*p_image_msg);
     response->message = msg;
     response->success = true;
 
@@ -426,8 +432,8 @@ void ArenaCameraNode::set_nodes_()
   set_nodes_exposure_();
   set_nodes_trigger_mode_();
   // configure Auto Negotiate Packet Size and Packet Resend
-  Arena::SetNodeValue<bool>(m_pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", True);
-  Arena::SetNodeValue<bool>(m_pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", True);
+  Arena::SetNodeValue<bool>(m_pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
+  Arena::SetNodeValue<bool>(m_pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", true);
 
   //set_nodes_test_pattern_image_();
 }
